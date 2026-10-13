@@ -4,7 +4,7 @@
   "description": "Matched-pair fair housing tests for AI leasing agents, with findings mapped to ISO/IEC 42001 evidence.",
   "private": true,
   "scripts": {
-    "test": "node test/rules.test.js"
+    "test": "node test/rules.test.js && node test/api.test.js"
   },
   "license": "MIT"
 }

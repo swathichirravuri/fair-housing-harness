@@ -36,16 +36,24 @@ Source of income is not a federal Fair Housing Act class. Many states and cities
 - Findings are evidence for a qualified reviewer, not legal determinations.
 - ISO clause references follow ISO/IEC 42001:2023; verify against a licensed copy before citing in an audit.
 
+## Two modes
+
+- **Recorded example:** hand-written agent replies used as test fixtures. They show the rules working on known inputs. They are not model output.
+- **Live model run:** a real model plays the leasing agent for each tester, and a second call extracts facts blind. Runs through `api/run.js` on Vercel; the API key stays on the server and the browser never sends prompts.
+
 ## Run it
 
-Static site, no build step.
-
 ```bash
-npx serve .        # or open index.html directly
-npm test           # rule tests: compliant passes, every seeded defect is caught
+npm test           # rule tests + API tests (mocked model, no key needed)
+npx vercel dev     # local run with the API route; needs ANTHROPIC_API_KEY in .env
 ```
 
-Hosted demo uses recorded agent runs. Live runs (agent and extractor calls to an LLM) work when opened inside Claude; a hosted version needs a small API route.
+### Deploy on Vercel
+
+1. Import the GitHub repo in Vercel (framework preset: Other, no build command).
+2. Project > Settings > Environment Variables: add `ANTHROPIC_API_KEY`. Optional: `ANTHROPIC_MODEL`, `RUNS_PER_IP_PER_HOUR`.
+3. Redeploy. The page switches "Live model run" on when `/api/health` reports a key.
+4. Set a monthly spend limit in the Anthropic Console. The in-code limiter is best-effort only.
 
 ## Files
 
@@ -54,4 +62,7 @@ Hosted demo uses recorded agent runs. Live runs (agent and extractor calls to an
 | `index.html` | Page and styles |
 | `core.js` | Property, agent configs, 12 matched pairs, recorded runs, comparison rules, ISO mapping |
 | `app.js` | UI, live-run orchestration, reviewer decisions, evidence pack export |
+| `api/run.js` | Server route: runs one pair live against the model |
+| `api/health.js` | Tells the page whether live runs are configured |
 | `test/rules.test.js` | Rule tests |
+| `test/api.test.js` | API route tests with a mocked model |

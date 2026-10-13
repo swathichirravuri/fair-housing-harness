@@ -65,7 +65,7 @@
   };
 
   async function runLive() {
-    if (!state.sample) { toast("Live runs need Claude access in this view."); return; }
+    if (!state.sample && !state.server) { toast("Live runs are not available on this page."); return; }
     state.running = true; state.ctl = new AbortController();
     const signal = state.ctl.signal;
     state.results = {}; state.decisions = {};
@@ -77,22 +77,35 @@
       if (signal.aborted) break;
       n++;
       state.results[p.id] = { status: "running" };
-      setStatus(`Running ${p.id} (${n} of ${C.PAIRS.length}). The first request asks you to allow Claude.`);
+      setStatus(state.server ? `Running ${p.id} (${n} of ${C.PAIRS.length}) against a live model...` : `Running ${p.id} (${n} of ${C.PAIRS.length}). The first request asks you to allow Claude.`);
       render();
       try {
-        const opts = { signal, modelTier: "quick", cache: false };
-        const [ctrlReply, testReply] = await Promise.all([
-          state.sample(C.agentPrompt(state.cfg, p.control), opts),
-          state.sample(C.agentPrompt(state.cfg, p.test), opts)
-        ]);
-        const swap = Math.random() < 0.5; // blind the extractor to which reply is which
-        const a = swap ? testReply.text : ctrlReply.text, b = swap ? ctrlReply.text : testReply.text;
-        const ex = await state.sample.json(C.extractionPrompt(a, b), { signal, modelTier: "quick" });
-        const fa = C.normFacts(ex && ex.a), fb = C.normFacts(ex && ex.b);
-        state.results[p.id] = { status: "done", source: "live", swapped: swap,
-          control: { text: ctrlReply.text, facts: swap ? fb : fa },
-          test: { text: testReply.text, facts: swap ? fa : fb } };
+        if (state.server) {
+          // Hosted: the server builds the prompts and holds the API key.
+          const r = await fetch("/api/run", { method: "POST", signal, headers: { "content-type": "application/json" },
+            body: JSON.stringify({ pairId: p.id, config: state.cfg }) });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw { code: r.status === 429 ? "rate_limited" : "server_error", message: data.error };
+          state.results[p.id] = { status: "done", source: "live · " + (data.model || "model"), swapped: data.swapped,
+            control: { text: data.control.text, facts: C.normFacts(data.control.facts) },
+            test: { text: data.test.text, facts: C.normFacts(data.test.facts) } };
+        } else {
+          const opts = { signal, modelTier: "quick", cache: false };
+          const [ctrlReply, testReply] = await Promise.all([
+            state.sample(C.agentPrompt(state.cfg, p.control), opts),
+            state.sample(C.agentPrompt(state.cfg, p.test), opts)
+          ]);
+          const swap = Math.random() < 0.5; // blind the extractor to which reply is which
+          const a = swap ? testReply.text : ctrlReply.text, b = swap ? ctrlReply.text : testReply.text;
+          const ex = await state.sample.json(C.extractionPrompt(a, b), { signal, modelTier: "quick" });
+          const fa = C.normFacts(ex && ex.a), fb = C.normFacts(ex && ex.b);
+          state.results[p.id] = { status: "done", source: "live", swapped: swap,
+            control: { text: ctrlReply.text, facts: swap ? fb : fa },
+            test: { text: testReply.text, facts: swap ? fa : fb } };
+        }
       } catch (e) {
+        if (e && e.name === "AbortError") { state.results[p.id] = { status: "pending" }; break; }
+        if (e && e.code === "server_error") { state.results[p.id] = { status: "error", error: e.message || "The server could not run this pair." }; render(); continue; }
         const code = e && e.code;
         if (code === "cancelled") { state.results[p.id] = { status: "pending" }; break; }
         state.results[p.id] = { status: "error", error: ERR_COPY[code] || "Something went wrong on this pair." };
@@ -375,8 +388,17 @@
     window.claude.use("sample").then(s => { state.sample = s; $("#mode-live").disabled = !s; }).catch(() => {});
     window.claude.use("downloads").then(dl => { state.downloads = dl; if (state.tab === "ledger") renderLedger(); }).catch(() => {});
   } else {
-    // Static hosting (e.g. Vercel): live LLM runs need an API backend, so only recorded runs are offered.
+    // Hosted (e.g. Vercel): live runs go through /api/run when the deployment has an API key.
     const lbl = document.querySelector('label[for="mode-live"]');
-    if (lbl) { lbl.title = "Live runs need an LLM backend. This hosted demo uses recorded runs."; lbl.textContent = "Live (needs backend)"; }
+    fetch("/api/health", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(h => {
+      if (h && h.live) {
+        state.server = true;
+        $("#mode-live").disabled = false;
+        if (lbl) lbl.textContent = "Live model run";
+      } else if (lbl) { lbl.title = "Live runs are not configured on this deployment."; lbl.textContent = "Live (not configured)"; }
+    }).catch(() => { if (lbl) lbl.textContent = "Live (not configured)"; });
+    // Make the default view honest about what recorded means.
+    const rec = document.querySelector('label[for="mode-rec"]');
+    if (rec) rec.textContent = "Recorded example";
   }
 })();
