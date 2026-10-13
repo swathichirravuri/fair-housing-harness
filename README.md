@@ -1,10 +1,10 @@
 # Fair Housing Paired-Test Harness
 
-**An assurance layer for AI leasing agents.** Two simulated prospects send the same message to an AI leasing agent. The only difference is one protected-class cue. The harness compares what each was offered and turns every difference into ISO/IEC 42001 evidence that a named reviewer must sign off.
+**An assurance layer for AI leasing agents in property management software.** Two simulated prospects send the same message to an AI leasing agent. The only difference is one protected-class cue. The harness compares what each was offered and turns every difference into ISO/IEC 42001 evidence that a named reviewer must sign off.
 
 Part of the **AuditMind "Diagnose"** layer of the AI Trust Stack. Built by Swathi, AI Product Manager (AIGP).
 
-> Independent case study on a fictional property with a mock agent. Not affiliated with or tested against RealPage or any real leasing product. Not legal advice.
+> Independent case study on a fictional property with a mock agent. Not affiliated with or tested against any real property management or leasing product. Not legal advice.
 
 ## The problem
 
