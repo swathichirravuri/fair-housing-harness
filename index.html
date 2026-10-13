@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Matched-pair fair housing tests for AI leasing agents, with findings mapped to ISO/IEC 42001 evidence.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Fair Housing Test Harness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: audit workpaper. Controls on top, a rail of 12 paired tests, and a side-by-side tester transcript with its findings. */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#EAEEF2; --ink:#18212D; --muted:#5A6577; --line:#D9DFE6;
+  --accent:#1D5C8A; --accent-ink:#FFFFFF; --accent-soft:#E2ECF5;
+  --fail:#A8261E; --fail-soft:#FBE9E7; --review:#9A5B00; --review-soft:#FCF0DC; --pass:#26704A; --pass-soft:#E3F2E9; --info:#5A6577; --info-soft:#EAEEF2;
+  --mark:#FFF1B8;
+  --f-display:"Newsreader", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11151B; --surface:#181E26; --sunk:#202733; --ink:#E5E9EF; --muted:#9AA4B3; --line:#2B3442;
+  --accent:#74AEDB; --accent-ink:#0E1620; --accent-soft:#1D2D3D;
+  --fail:#F08A80; --fail-soft:#3A1E1C; --review:#E5AB55; --review-soft:#3A2C16; --pass:#71C394; --pass-soft:#17301F; --info:#9AA4B3; --info-soft:#232B36;
+  --mark:#4A4120; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11151B; --surface:#181E26; --sunk:#202733; --ink:#E5E9EF; --muted:#9AA4B3; --line:#2B3442;
+  --accent:#74AEDB; --accent-ink:#0E1620; --accent-soft:#1D2D3D;
+  --fail:#F08A80; --fail-soft:#3A1E1C; --review:#E5AB55; --review-soft:#3A2C16; --pass:#71C394; --pass-soft:#17301F; --info:#9AA4B3; --info-soft:#232B36;
+  --mark:#4A4120; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:grid;gap:22px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4vw,40px);line-height:1.1;letter-spacing:-.01em}
+h2{font-family:var(--f-display);font-weight:600;font-size:22px}
+h3{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
+.lede{color:var(--muted);max-width:68ch}
+.head{display:grid;gap:10px}
+.disclaimer{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* Controls */
+.controls{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end}
+.field{display:grid;gap:6px;min-width:0}
+.field>span{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--sunk)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);border-right:1px solid var(--line)}
+.seg label:last-of-type{border-right:0}
+.seg input:checked+label{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+.seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:-2px}
+.seg input:disabled+label{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:13px;color:var(--muted)}
+
+/* Summary */
+.summary{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.summary>div{background:var(--surface);padding:14px 16px;display:grid;gap:4px;min-width:0}
+.summary .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.summary .v{font-family:var(--f-mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums}
+.verdict .v{font-family:var(--f-display);font-size:21px;line-height:1.2}
+.verdict.fail{box-shadow:inset 4px 0 0 var(--fail)} .verdict.pass{box-shadow:inset 4px 0 0 var(--pass)} .verdict.review{box-shadow:inset 4px 0 0 var(--review)}
+.v.fail{color:var(--fail)} .v.review{color:var(--review)} .v.pass{color:var(--pass)} .v.info{color:var(--info)}
+.fp{font-size:12px;color:var(--muted)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:9px 12px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+
+/* Results */
+.results{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start}
+.rail{display:grid;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.group{display:grid;gap:2px}
+.group h3{padding:0 4px 4px}
+.pairbtn{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;border:1px solid transparent;background:none;padding:7px 8px}
+.pairbtn:hover{background:var(--surface)}
+.pairbtn[aria-current="true"]{background:var(--surface);border-color:var(--line);box-shadow:inset 3px 0 0 var(--accent)}
+.pairbtn .id{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.pairbtn .fo{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.chip.fail{background:var(--fail-soft);color:var(--fail)} .chip.review{background:var(--review-soft);color:var(--review)}
+.chip.pass{background:var(--pass-soft);color:var(--pass)} .chip.info{background:var(--info-soft);color:var(--info)}
+.chip.pending{background:var(--sunk);color:var(--muted)} .chip.running{background:var(--accent-soft);color:var(--accent)}
+.chip.high{background:var(--fail-soft);color:var(--fail)} .chip.medium{background:var(--review-soft);color:var(--review)}
+
+.detail{display:grid;gap:16px;min-width:0}
+.dhead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:500}
+.testers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tester{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-rows:auto auto 1fr auto;min-width:0}
+.tester header{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tester header b{font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+.tester .role{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.msg{padding:12px 14px;display:grid;gap:4px}
+.msg .who{font-size:12px;color:var(--muted)}
+.msg.prospect{background:var(--sunk)}
+.msg.agent p{white-space:pre-wrap}
+.cue{background:var(--mark);border-radius:3px;padding:0 2px}
+.facts{border-top:1px solid var(--line);padding:10px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px}
+.facts dt{color:var(--muted)} .facts dd{margin:0;font-family:var(--f-mono);font-size:12.5px;overflow-wrap:anywhere}
+.facts dd.diff{color:var(--fail);font-weight:500}
+.empty{color:var(--muted);font-style:italic}
+
+.findings{display:grid;gap:10px}
+.finding{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px}
+.finding.sev-high{box-shadow:inset 3px 0 0 var(--fail)} .finding.sev-medium{box-shadow:inset 3px 0 0 var(--review)} .finding.sev-info{box-shadow:inset 3px 0 0 var(--info)}
+.ftop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftop strong{font-size:15px}
+.fid{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
+.rulebox{font-size:13px;color:var(--muted)}
+.refs{display:flex;flex-wrap:wrap;gap:6px}
+.ref{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
+.review{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
+.review .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.review button{font-size:13px;padding:5px 10px}
+.review button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.review input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);flex:1 1 180px;min-width:0}
+.passnote{background:var(--pass-soft);color:var(--pass);border-radius:var(--r);padding:12px 14px;font-size:14px}
+.infonote{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:12px 14px;font-size:14px}
+
+/* Ledger & docs */
+.panel{display:grid;gap:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.reviewer{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.reviewer input{font:inherit;padding:6px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;background:var(--sunk);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.mono{white-space:nowrap}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+.card ul,.card ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.card pre{margin:0;white-space:pre-wrap;font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);padding:12px;border-radius:var(--r);overflow-x:auto}
+.prose{max-width:72ch;display:grid;gap:12px}
+.note{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:var(--r);font-size:14px}
+
+@media (max-width:860px){
+  .results{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .summary .verdict{grid-column:1/-1}
+  .cols2{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:620px){
+  .testers{grid-template-columns:minmax(0,1fr)}
+  .actions{margin-left:0}
+  .wrap{padding-inline:16px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">AuditMind · Diagnose · Rental housing case study</div>
+    <h1>Fair Housing Paired-Test Harness</h1>
+    <p class="lede">Two simulated prospects send the same message to an AI leasing agent. The only difference is one protected-class cue. The harness compares what each was offered and turns every difference into ISO/IEC 42001 evidence a reviewer must sign off.</p>
+    <p class="disclaimer">Independent case study built on a fictional property and a mock agent. Not affiliated with or tested against RealPage or any real leasing product. Not legal advice.</p>
+  </header>
+
+  <form class="controls" id="controls" aria-label="Run settings">
+    <div class="field"><span>Agent under test</span>
+      <div class="seg" role="radiogroup" aria-label="Agent configuration">
+        <input type="radio" name="cfg" id="cfg-defect" value="defect" checked><label for="cfg-defect">Seeded defect</label>
+        <input type="radio" name="cfg" id="cfg-compliant" value="compliant"><label for="cfg-compliant">Compliant</label>
+      </div>
+    </div>
+    <div class="field"><span>Jurisdiction</span>
+      <div class="seg" role="radiogroup" aria-label="Jurisdiction">
+        <input type="radio" name="jur" id="jur-co" value="colorado" checked><label for="jur-co">Colorado</label>
+        <input type="radio" name="jur" id="jur-fed" value="federal"><label for="jur-fed">Federal FHA only</label>
+      </div>
+    </div>
+    <div class="field"><span>Agent responses</span>
+      <div class="seg" role="radiogroup" aria-label="Response source">
+        <input type="radio" name="mode" id="mode-rec" value="recorded" checked><label for="mode-rec">Recorded run</label>
+        <input type="radio" name="mode" id="mode-live" value="live"><label for="mode-live">Live with Claude</label>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button type="button" id="stop" hidden>Stop</button>
+      <button type="submit" class="primary" id="run">Run 12 paired tests</button>
+    </div>
+  </form>
+
+  <section class="summary" id="summary" aria-label="Run summary"></section>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" id="tab-results" aria-selected="true" aria-controls="view-results">Results</button>
+    <button role="tab" id="tab-ledger" aria-selected="false" aria-controls="view-ledger">Evidence ledger</button>
+    <button role="tab" id="tab-config" aria-selected="false" aria-controls="view-config">Agent and property</button>
+    <button role="tab" id="tab-method" aria-selected="false" aria-controls="view-method">Method and limits</button>
+  </nav>
+
+  <section id="view-results" role="tabpanel" aria-labelledby="tab-results" class="results">
+    <aside class="rail" id="rail" aria-label="Paired tests"></aside>
+    <div class="detail" id="detail"></div>
+  </section>
+
+  <section id="view-ledger" role="tabpanel" aria-labelledby="tab-ledger" class="panel" hidden></section>
+  <section id="view-config" role="tabpanel" aria-labelledby="tab-config" class="panel" hidden></section>
+
+  <section id="view-method" role="tabpanel" aria-labelledby="tab-method" class="panel" hidden>
+    <div class="cols2">
+      <div class="card">
+        <h2>How a paired test works</h2>
+        <ol>
+          <li>Each pair is two prospect messages that are identical except for one protected-class cue, following HUD's matched-pair testing method.</li>
+          <li>Both messages go to the same agent configuration with the same property facts.</li>
+          <li>A blind extractor reads each reply without seeing the prospect message and records facts: units offered, special mentioned, fees quoted, next step, discouraging language and any qualification answer.</li>
+          <li>Fixed rules compare the two fact sets. The model never decides whether something is discrimination; it only extracts facts, and the rules are inspectable.</li>
+          <li>Every rule hit becomes a finding mapped to ISO/IEC 42001 controls and waits for a named reviewer decision.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h2>What this harness does not show</h2>
+        <ul>
+          <li><b>Disparate impact.</b> Paired tests detect differential treatment. Disparate impact needs outcome data across a real applicant population.</li>
+          <li><b>Uniform failures.</b> If the agent mistreats both testers the same way (for example insisting on phone calls when a deaf prospect asked for text), parity passes. D2 is in the suite to make that limit visible; it needs a separate accommodation-policy check.</li>
+          <li><b>Sampling variance.</b> Live runs take one reply per tester. A production version runs several trials per pair and flags only stable differences.</li>
+          <li><b>Real systems.</b> The agent is a mock on a fictional property. Results describe the method, not any vendor's product.</li>
+          <li><b>Legal conclusions.</b> Findings are evidence for a qualified reviewer, not determinations of a violation.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Why source of income is switchable</h2>
+        <p>Source of income, including Housing Choice Vouchers, is not a protected class under the federal Fair Housing Act. Many states and cities protect it, Colorado among them. Under "Federal FHA only" those findings are kept as informational instead of high severity, so the same suite serves properties in different jurisdictions.</p>
+      </div>
+      <div class="card">
+        <h2>Why the defect is seeded</h2>
+        <p>A harness that only ever shows green proves nothing. The seeded configuration holds five rules that read like ordinary operations guidance ("route voucher applications to the manager", "families prefer the ground floor"). Each one produces differential treatment. Catching them shows the harness works, and shows how steering usually enters a system: through configuration, not intent.</p>
+      </div>
+    </div>
+    <p class="note">Control references follow ISO/IEC 42001:2023. Check numbering against your licensed copy of the standard before citing it in an audit.</p>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
