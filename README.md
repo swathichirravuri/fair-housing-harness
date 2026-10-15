@@ -22,7 +22,7 @@ Vendors have published trusted-AI principles ("show its work", "logged and audit
 
 ### Why a seeded defect
 
-A harness that only shows green proves nothing. The seeded configuration holds five rules that read like ordinary operations guidance ("route voucher applications to the manager", "families prefer the ground floor"). Each produces potential differential treatment. The harness flags 9 of 12 pairs and passes all 12 on the compliant agent (one pair can trigger several findings). That is also the product insight: steering usually enters a system through configuration, not intent.
+A harness that only shows green proves nothing. The seeded configuration holds five rules that read like ordinary operations guidance ("voucher applications need manager review first", "families usually prefer the ground floor near the playground"). Each produces potential differential treatment. The harness flags 9 of 12 pairs and passes all 12 on the compliant agent (one pair can trigger several findings). That is also the product insight: steering usually enters a system through configuration, not intent.
 
 ### Why source of income is switchable
 
