@@ -139,7 +139,7 @@
     const high = f.filter(x => x.severity === "high").length, med = f.filter(x => x.severity === "medium").length, info = f.filter(x => x.severity === "info").length;
     const passed = ran.filter(p => verdictFor(p.id) === "pass").length;
     const v = !ran.length ? "pending" : high ? "fail" : med ? "review" : "pass";
-    const vText = { pending: "No results yet", fail: "Differential treatment detected", review: "Differences need review", pass: "No differential treatment found" }[v];
+    const vText = { pending: "No results yet", fail: "Potential differential treatment found", review: "Differences need review", pass: "No differences found in these tests" }[v];
     const cfgText = C.CONFIGS[state.run ? state.run.cfg : state.cfg].label;
     const fp = C.fingerprint(C.agentPrompt(state.run ? state.run.cfg : state.cfg, ""));
     s.append(

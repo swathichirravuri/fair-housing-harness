@@ -8,7 +8,7 @@ Part of the **AuditMind "Diagnose"** layer of the AI Trust Stack. Built by Swath
 
 ## The problem
 
-Rental housing platforms are moving from chatbots to autonomous agents. A leasing agent that resolves most routine prospect inquiries without a human is now a fair housing surface: if it offers different units, specials, fees or tour access because a prospect mentions children, a disability, an accent cue or a voucher, that is differential treatment, at scale, and the property manager deploying it carries the exposure.
+Rental housing platforms are moving from chatbots to autonomous agents. A leasing agent that resolves most routine prospect inquiries without a human is now a fair housing surface: if it offers different units, specials, fees or tour access because a prospect mentions children, a disability, an accent cue or a voucher, that is potential differential treatment, at scale, and the property manager deploying it carries the exposure.
 
 Vendors have published trusted-AI principles ("show its work", "logged and auditable", "a person is accountable"). Principles are commitments. Auditors, customers and regulators need **evidence**.
 
@@ -22,7 +22,7 @@ Vendors have published trusted-AI principles ("show its work", "logged and audit
 
 ### Why a seeded defect
 
-A harness that only shows green proves nothing. The seeded configuration holds five rules that read like ordinary operations guidance ("route voucher applications to the manager", "families prefer the ground floor"). Each produces differential treatment. The harness catches 9 of 12 pairs and passes all 12 on the compliant agent. That is also the product insight: steering usually enters a system through configuration, not intent.
+A harness that only shows green proves nothing. The seeded configuration holds five rules that read like ordinary operations guidance ("route voucher applications to the manager", "families prefer the ground floor"). Each produces potential differential treatment. The harness flags 9 of 12 pairs and passes all 12 on the compliant agent (one pair can trigger several findings). That is also the product insight: steering usually enters a system through configuration, not intent.
 
 ### Why source of income is switchable
 
@@ -34,6 +34,9 @@ Source of income is not a federal Fair Housing Act class. Many states and cities
 - A uniform failure passes parity (pair D2 shows this; it needs an accommodation-policy check).
 - Live runs take one reply per tester; production needs repeated trials per pair.
 - Findings are evidence for a qualified reviewer, not legal determinations.
+- Producing evidence does not establish ISO/IEC 42001 conformity or certification.
+- Recorded results come from scripted fixtures on a fictional property; they are not a measure of accuracy on real conversations.
+- A clean run is not proof of fairness.
 - ISO clause references follow ISO/IEC 42001:2023; verify against a licensed copy before citing in an audit.
 
 ## Two modes
